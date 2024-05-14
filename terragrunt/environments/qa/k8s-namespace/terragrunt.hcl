@@ -1,0 +1,68 @@
+include "root" {
+  path = find_in_parent_folders()
+}
+
+terraform {
+  source = "git@github.com:4sh/4sh-terraform-libs.git//shared/modules/k8s-namespace?ref=main"
+  extra_arguments "env_vars"  {
+    commands = ["apply", "plan"]
+    env_vars = {
+      KUBECONFIG = "./cluster.kubeconfig"
+    }
+  }
+
+  before_hook "fetch_kubernetes_config" {
+  commands = ["apply", "plan"]
+  execute  = ["gcloud", "container", "clusters", "get-credentials",
+    "--project", "${local.environment_vars.locals.gke_cluster_project}",
+    "${local.environment_vars.locals.gke_cluster_name}",
+    "--region", "${local.environment_vars.locals.gke_cluster_location}"]
+  }
+}
+
+locals {
+  # Automatically load the global-level variables
+  global_vars      = read_terragrunt_config(find_in_parent_folders("terragrunt.hcl"))
+  # Automatically load environment-level variables
+  environment_vars = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+}
+
+generate "provider" {
+  path      = "provider.tf"
+  if_exists = "overwrite_terragrunt"
+  contents = <<EOF
+    provider "kubernetes" {
+      config_path = "./cluster.kubeconfig"
+    }
+
+    provider "googleworkspace" {
+      credentials             = jsonencode(data.vault_generic_secret.google_workspace_sa_groupmanager.data)
+      customer_id             = "C0226r6ar"
+      impersonated_user_email = "admin@4sh.fr"
+      oauth_scopes = [
+        "https://www.googleapis.com/auth/admin.directory.group",
+        "https://www.googleapis.com/auth/apps.groups.settings"]
+    }
+
+    provider "google" {
+      project     = "${local.global_vars.locals.registry_project}"
+    }
+
+  EOF
+}
+
+inputs = {
+  customer = local.global_vars.locals.customer
+  product  = local.global_vars.locals.product
+  environment = local.environment_vars.locals.environment
+
+  cluster_name = local.environment_vars.locals.gke_cluster_name
+  cluster_location = local.environment_vars.locals.gke_cluster_location
+  gcp_project = local.environment_vars.locals.gke_cluster_project
+  registry_project = local.global_vars.locals.registry_project
+
+
+  ingress_role_label = local.environment_vars.locals.ingress_role_label
+
+  nsadmin_group_members = local.environment_vars.locals.nsadmin_group_members
+}
