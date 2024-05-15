@@ -38,6 +38,14 @@ generate "provider" {
     provider "vault" {
       address = "${local.global_vars.locals.vault_address}"
     }
+    provider "googleworkspace" {
+      credentials             = jsonencode(data.vault_generic_secret.google_workspace_sa_groupmanager.data)
+      customer_id             = "C0226r6ar"
+      impersonated_user_email = "admin@4sh.fr"
+      oauth_scopes = [
+        "https://www.googleapis.com/auth/admin.directory.group",
+        "https://www.googleapis.com/auth/apps.groups.settings"]
+    }
   EOF
 }
 
