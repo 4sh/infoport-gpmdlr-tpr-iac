@@ -8,7 +8,7 @@ locals {
   gke_cluster_location = "europe-west1-c" # Location of the GKE cluster
 
   ## Vault resources
-  vault_custom_readers = []
+  vault_custom_readers = ["elian.oriou@4sh.fr","kamlinne-bebora.ly@4sh.fr","benjamin.letourneau@4sh.fr","test_user@4sh.fr"]
 
   ## ArgoCD resources
   argocd_cluster_name = "quatreapp-cl" # Name of the ArgoCD cluster
@@ -17,7 +17,7 @@ locals {
 
   ## Namespace resources
   nsadmin_group_members = ["elian.oriou@4sh.fr","kamlinne-bebora.ly@4sh.fr","benjamin.letourneau@4sh.fr"]
-  ingress_role_label    = "nginx-ingress"
+  ingress_role_label    = "nginx"
   ## ArgoCD Applications
   # MongoDB
   mongo_helm_chart_version   = "14.5.0"
